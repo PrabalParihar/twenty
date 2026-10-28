@@ -5,6 +5,7 @@ import {
   unsubscribeFromFrontComponentExecutionContext,
 } from '../context/frontComponentContext';
 import { type FrontComponentExecutionContext } from '../types/FrontComponentExecutionContext';
+import { isShallowEqual } from '../utils/isShallowEqual';
 
 export const useFrontComponentExecutionContext = <T>(
   selector: (context: FrontComponentExecutionContext) => T,
@@ -19,8 +20,12 @@ export const useFrontComponentExecutionContext = <T>(
     const onContextChange = () => {
       const newSelectedValue = selector(getFrontComponentExecutionContext());
 
-      const hasSelectedValueChanged =
-        newSelectedValue !== previousSelectedValueRef.current;
+      // Selectors returning a new object or array on each call (e.g. an
+      // object literal) would otherwise re-render on every effect run, forever.
+      const hasSelectedValueChanged = !isShallowEqual(
+        newSelectedValue,
+        previousSelectedValueRef.current,
+      );
 
       if (hasSelectedValueChanged) {
         previousSelectedValueRef.current = newSelectedValue;
